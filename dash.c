@@ -24,7 +24,7 @@ char *clr[2] = {"clear", NULL};
 #define GREEN 		"\033[0;32m"
 #define BLUE 		"\033[0;34m"
 #define INVERT		"\033[0;7m"
-#define RESET  		"\e[0m" 
+#define RESET  		"\e[0m"
 #define BOLD		"\e[1m"
 #define ITALICS		"\e[3m"
 
@@ -82,9 +82,9 @@ void pipe_history_input(char *line)
 }
 
 void history_input(char **args, char *d)
-{	
+{
 	FILE *history_file = fopen(get_hist_file_path(), "a+");
-	int j = 0;	
+	int j = 0;
 	fprintf(history_file, "%d. ", history_line_count());
 	while(args[j] != NULL)
 	{
@@ -117,7 +117,7 @@ char **split_pipes(char *input)
 	int i = 0;
 	while(p != NULL)
 	{
-		
+
 		s[i] = trimws(p);
 		i++;
 		p = strtok(NULL, "| ");
@@ -147,7 +147,7 @@ int args_length(char **args)
  * Starts off by copying the current stdin and stdout to tempin and tempout respectively
  * Then loops to check for input redirection if any
  * fdin is set to current stdin (current stdin or input redirection)
- * next, the for loop iterates over each command in the array returned by split_pipes() 
+ * next, the for loop iterates over each command in the array returned by split_pipes()
  * the dup2(fdin, 0) call duplicates fdin over 0 as in it sets as the stdin for current session
  * and subsequent call closes fdin because it is no longer required ot be open
  *
@@ -162,8 +162,8 @@ int args_length(char **args)
 int dash_pipe(char **args)
 {
 	/*saving current stdin and stdout for restoring*/
-	int tempin=dup(0);			
-	int tempout=dup(1);			
+	int tempin=dup(0);
+	int tempout=dup(1);
 	int j=0, i=0, flag=0;
 	int fdin = 0, fdout;
 
@@ -172,7 +172,7 @@ int dash_pipe(char **args)
 
 	for(j =0; j<args_length(args); j++)
 	{
-		
+
 		if(strcmp(args[j], "<") == 0)
 		{
 			fdin=open(args[j+1], O_RDONLY);
@@ -189,7 +189,7 @@ int dash_pipe(char **args)
 		dup2(fdin, 0);
 		close(fdin);
 		if(i == args_length(args)-3 && strcmp(args[i+1], ">") == 0)
-		{	
+		{
 			if((fdout = open(args[i+1], O_WRONLY)))
 				i++;
 		}
@@ -201,12 +201,12 @@ int dash_pipe(char **args)
 			pipe(fd);
 			fdout = fd[1];
 			fdin = fd[0];
-		}	
+		}
 
 		dup2(fdout, 1);
 		close(fdout);
-		
-		
+
+
 		pid = fork();
 		if(pid == 0)
 		{
@@ -234,20 +234,20 @@ int dash_pipe(char **args)
 char *get_hist_file_path()
 {
 	static char file_path[128];
-	strcat(strncpy(file_path, getenv("HOME"), 113), "/.dash_history");
+	strcat(strncpy(file_path, getenv("HOME"), 113), "/.cache/dash_history");
 	return file_path;
 }
 
 
 
 /* shows user it's recent history of entered commands and waits for user input
- * 
+ *
  * q:		exit
- * line number: executes that particular command again from history 
+ * line number: executes that particular command again from history
  * -1: 		reset history file
  */
 int dash_history()
-{	
+{
 	FILE *fp = fopen(get_hist_file_path(), "r");
 	int ch, c, line_num = 1;
 	char line[128];
@@ -269,10 +269,10 @@ int dash_history()
 	fseek(fp, 0, SEEK_SET);
 	if(isdigit(ch) != 0)
 	{
-		printf("please enter a numerical choice\n");	
+		printf("please enter a numerical choice\n");
 	}
 	else if (ch == 0)
-	{	
+	{
 		fclose(fp);
 		return 1;
 	}
@@ -286,13 +286,13 @@ int dash_history()
 
 	else
 	{
-		
+
 	   	while((fgets(line, 128, fp)) != NULL)
 	   	{
 			if(line_num == ch)
 			{
 
-				
+
 				strcpy(prev_comm, &line[3]);
 				int p = 0, flag = 0;
 				fclose(fp);
@@ -315,16 +315,16 @@ int dash_history()
 					args = split_pipes(prev_comm);
 					return dash_pipe(args);
 				}
-	
+
 			}
 			else
 				line_num++;
-				
+
 	   	}
-	}	
+	}
 	return 1;
 }
-			
+
 /*
  * Returns the current number of lines in the history file
  * for appending new items in the file
@@ -335,11 +335,11 @@ int history_line_count()
 	int c;
 	int numOfLines = 1;
 	do
-	{	
+	{
 		c = getc(fp);
 		if(c == '\n')
 		{
-			numOfLines++;	
+			numOfLines++;
 		}
 	}while(c != EOF);
 	return numOfLines;
@@ -360,7 +360,7 @@ void signalHandler()
 }
 
 
-/***************************************************************************** 
+/*****************************************************************************
  * Executes the system call execvp with the tokenized user input as argument
  * the execvp() call takes place in a child process
  * the parent waits until the child has finished processing
@@ -372,16 +372,16 @@ int dash_execute(char **args)
 	cpid = fork();
 
 	if(cpid == 0)
-	{	
+	{
 		if(execvp(args[0], args) < 0)
-			printf("dash: command not found: %s\n", args[0]); 
+			printf("dash: command not found: %s\n", args[0]);
 		exit(EXIT_FAILURE);
-		
+
 	}
 	else if(cpid < 0)
 		printf(RED "Error forking" RESET "\n");
 	else
-	{    
+	{
 		waitpid(cpid, &status, WUNTRACED);
 	}
 	return 1;
@@ -411,8 +411,8 @@ int dash_launch(char **args)
 	for(i = 0; i<builtin_funcs_count(); i++)
 	{
 		if(strcmp(args[0], builtin_str[i]) == 0)
-		{	
-			return (*builtin_funcs[i])(args);	
+		{
+			return (*builtin_funcs[i])(args);
 		}
 	}
 	return dash_execute(args);
@@ -453,7 +453,7 @@ int dash_grep(char **args)
 }
 
 
-/* 
+/*
  * Displays a brief description and a list of  builtin commands to the user for the
  * input command - 'help'
  */
@@ -461,7 +461,7 @@ int dash_help(char **args)
 {
 	if(args[0] != NULL && strcmp(args[0], "help") == 0)
 	{
-		fprintf(stderr,"\n------\n" 
+		fprintf(stderr,"\n------\n"
 				BOLD "\ndash " RESET "is a basic unix terminal shell written purely in C developed by Danish Prakash\n"
 				"\nSupported Commands:\n1. cd\n2. exit\n3. help\n4. touch\n5. cat"
 				"\n\n------\n\n");
@@ -476,7 +476,7 @@ int dash_exit(char **args)
 }
 
 
-/* 
+/*
  * Provides the current working directory for the prompt
  */
 void get_dir(char *state)
@@ -520,7 +520,7 @@ char **split_line(char *line)
 
 	if(!tokens)
 	{
-		fprintf(stderr, "%sdash: Allocation error%s\n", RED, RESET);	
+		fprintf(stderr, "%sdash: Allocation error%s\n", RED, RESET);
 		exit(EXIT_FAILURE);
 	}
 	token = strtok(line, TOK_DELIM);
@@ -549,7 +549,7 @@ char **split_line(char *line)
 	return tokens;
 }
 
-/* 
+/*
  * Test function
  */
 void printtokens(char **tokens)
@@ -604,11 +604,11 @@ char *read_line()
 	}
 }
 
-/******************* 
+/*******************
  * driving function
- * 
+ *
  * status var controlled while loop
- * every iteration first prints the prompt(cwd) 
+ * every iteration first prints the prompt(cwd)
  * then proceeds to read user input using the func read_line()
  * the input is then split into tokens using the split_line() func
  * the returned stream of tokens are then passed onto the launch func
@@ -620,18 +620,18 @@ void loop()
 	char *line;
 	char **args;
 	int status=1, i = 0, flag = 0;
-	
+
 
 	do{
 		get_dir("loop");
 		printf(CYAN "> " RESET);
-		line = read_line();	
+		line = read_line();
 		flag = 0;
 		i = 0;
 		while(line[i] != '\0')
 		{
 			if(line[i] == '|')
-			{	
+			{
 				flag = 1;
 				break;
 			}
@@ -640,7 +640,7 @@ void loop()
 		if(flag)
 		{
 				pipe_history_input(line);
-				args = split_pipes(line);	
+				args = split_pipes(line);
 				status = dash_pipe(args);
 		}
 		else
